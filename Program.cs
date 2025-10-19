@@ -10,8 +10,17 @@ namespace Program
         static int cursorX = 0;
         static int cursorY = 0;
         static bool selecting = false;
+        static bool needToEat = false;
         static int selectedX = -1;
         static int selectedY = -1;
+        static List<string> symbols = new List<string>() { "A", "B", "C", "D", "E", "F", "G", "H" };
+        static ConsoleColor turn = ConsoleColor.White;
+        static public void DrawTurn(ConsoleColor turn)
+        {
+            Console.SetCursorPosition(30, 0);
+            Console.Write((turn == ConsoleColor.Black) ? "Current turn: Black" : "Current turn: White");
+            Console.SetCursorPosition(0, coordOfNotificationLine);
+        }
 
         static public void DrawPixel(int x, int y, ConsoleColor color)
         {
@@ -48,10 +57,12 @@ namespace Program
             board.DrawChessBoard(width, height);
             board.InitFigures();
             board.DrawFigures();
+            DrawTurn(turn);
 
             int cursorX = 0;
             int cursorY = 0;
             bool selecting = false;
+            bool needToEat = false;
             Figure? selectedFigure = null;
 
             while (true)
@@ -101,14 +112,43 @@ namespace Program
                             selectedFigure = board.GetFigure(cursorX, cursorY);
                             if (selectedFigure != null)
                             {
-                                selecting = true;
-                                selectedFigure.DrawFigure(highlight: true);
-                                Program.DrawNotification(new string(' ', 15));
-                                Program.DrawNotification($"Selected ({cursorX}, {cursorY})");
+                                if (selectedFigure.color != turn)
+                                {
+                                    Program.DrawNotification(new string(' ', 40));
+                                    Program.DrawNotification("It's not your turn!");
+                                }
+                                else
+                                {
+
+                                    if (board.IsAnyEatingMoveExistsForColor(turn))
+                                    {
+                                        if (board.IsAnyEatingMoveExistsForFigure(selectedFigure))
+                                        {
+                                            selecting = true;
+                                            needToEat = true;
+                                            selectedFigure.DrawFigure(highlight: true);
+                                            Program.DrawNotification(new string(' ', 40));
+                                            Program.DrawNotification($"Selected ({cursorX}, {cursorY})");
+                                        }
+                                        else
+                                        {
+                                            Program.DrawNotification(new string(' ', 40));
+                                            Program.DrawNotification("You must choose figure, which can eat!");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        selecting = true;
+                                        selectedFigure.DrawFigure(highlight: true);
+                                        Program.DrawNotification(new string(' ', 40));
+                                        Program.DrawNotification($"Selected ({cursorX}, {cursorY})");
+                                    }
+                                }
+                                
                             }
                             else
                             {
-                                Program.DrawNotification(new string(' ', 15));
+                                Program.DrawNotification(new string(' ', 40));
                                 Program.DrawNotification("No figure here");
                             }
                         }
@@ -118,26 +158,60 @@ namespace Program
                             {
                                 if (selectedFigure.IsPossibleMove(cursorX, cursorY, board))
                                 {
-                                    selectedFigure.x = cursorX;
-                                    selectedFigure.y = cursorY;
-                                    Console.Clear();
-                                    board.DrawChessBoard(width, height);
-                                    board.DrawFigures();
-                                    Program.DrawNotification(new string(' ', 15));
-                                    Program.DrawNotification("Move successful");
+                                    if (needToEat)
+                                    {
+                                        if (selectedFigure.IsPossibleEating(cursorX, cursorY, board))
+                                        {
+                                            board.RemoveFigure(selectedFigure.GetFigureToEat(cursorX, cursorY, board));
+                                            selectedFigure.Move(cursorX, cursorY);
+                                            Console.Clear();
+                                            board.DrawChessBoard(width, height);
+                                            board.DrawFigures();
+                                            Program.DrawNotification(new string(' ', 40));
+                                            Program.DrawNotification("Move successful");
+                                            if (!board.IsAnyEatingMoveExistsForFigure(selectedFigure))
+                                            {
+                                                turn = (turn == ConsoleColor.White) ? ConsoleColor.Black : ConsoleColor.White;
+                                                Program.DrawTurn(turn);
+                                            }
+                                            else
+                                            {
+                                                Program.DrawNotification(new string(' ', 40));
+                                                Program.DrawNotification("You have another eating!");
+                                                Program.DrawTurn(turn);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Program.DrawNotification(new string(' ', 40));
+                                            Program.DrawNotification("You must eat!");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        selectedFigure.Move(cursorX, cursorY);
+                                        Console.Clear();
+                                        board.DrawChessBoard(width, height);
+                                        board.DrawFigures();
+                                        Program.DrawNotification(new string(' ', 40));
+                                        Program.DrawNotification("Move successful");
+                                        turn = (turn == ConsoleColor.White) ? ConsoleColor.Black : ConsoleColor.White;
+                                        Program.DrawTurn(turn);
+                                    }
                                 }
                                 else
                                 {
-                                    Program.DrawNotification(new string(' ', 15));
+                                    Program.DrawNotification(new string(' ', 40));
                                     Program.DrawNotification("Invalid move");
                                 }
                                 selecting = false;
+                                needToEat = false;
                                 selectedFigure = null;
                             }
                         }
                         break;
                     case ConsoleKey.Escape:
-                        Program.DrawNotification(new string(' ', 15));
+                        Program.DrawNotification(new string(' ', 40));
                         Program.DrawNotification("Exiting game... Goodbye!");
                         Console.WriteLine();
                         Console.CursorVisible = true;

@@ -37,7 +37,48 @@ public class ChessBoard
         return output;
     }
 
-    public bool IsMoveLegal(Figure selectedFigure) // скорее всего должно работать, возиожно не в этом классе, возможно будет ругаться на static
+    public bool IsAnyEatingMoveExistsForColor(ConsoleColor color)
+    {
+        foreach (var figure in figures)
+        {
+            if (figure.color == color)
+            {
+                for (int newY = 0; newY < size; newY++)
+                {
+                    for (int newX = 0; newX < size; newX++)
+                    {
+                        if (figure.IsPossibleEating(newX, newY, this))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool IsAnyEatingMoveExistsForFigure(Figure figure)
+    {
+        for (int newY = 0; newY < size; newY++)
+        {
+            for (int newX = 0; newX < size; newX++)
+            {
+                if (figure.IsPossibleEating(newX, newY, this))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool IsMoveEating(Figure selectedFigure)
+    {
+        return true;
+    }
+
+    public bool IsMoveLegal(Figure selectedFigure)
     {
         bool isAnyFigureCanMove = true;
         foreach (var figure in figures)
@@ -173,9 +214,9 @@ public class ChessBoard
         return null;
     }
 
-    public void RemoveFigure(Figure figure)
+    public void RemoveFigure(Figure? figure)
     {
-        figures.Remove(figure);
+        if (figure != null) figures.Remove(figure);
     }
 
     public bool IsFigureExists(int x, int y)

@@ -36,6 +36,51 @@ public class Figure
         }
     }
 
+    public virtual Figure? GetFigureToEat(int newX, int newY, ChessBoard board)
+    {
+        if (isDamka)
+        {
+            if (Math.Abs(newX - x) != Math.Abs(newY - y))
+                return null;
+
+            int stepX = (newX - x) / Math.Abs(newX - x);
+            int stepY = (newY - y) / Math.Abs(newY - y);
+            int currX = x + stepX;
+            int currY = y + stepY;
+
+            Figure? figureToEat = null;
+            while (currX != newX || currY != newY)
+            {
+                Figure? figureAtPos = board.GetFigure(currX, currY);
+                if (figureAtPos != null)
+                {
+                    if (figureAtPos.color == this.color)
+                        return null;
+                    if (figureToEat != null)
+                        return null;
+                    figureToEat = figureAtPos;
+                }
+                currX += stepX;
+                currY += stepY;
+            }
+            return figureToEat;
+        }
+        else
+        {
+            int midX = (x + newX) / 2;
+            int midY = (y + newY) / 2;
+            if (Math.Abs(newX - x) == 2 && Math.Abs(newY - y) == 2)
+            {
+                Figure? middleFigure = board.GetFigure(midX, midY);
+                if (middleFigure != null && middleFigure.color != this.color)
+                {
+                    return middleFigure;
+                }
+            }
+            return null;
+        }
+    }
+
     public virtual bool IsDamka() { return isDamka; }
 
     public virtual void Move(int newX, int newY)
@@ -57,13 +102,72 @@ public class Figure
             Figure? middleFigure = board.GetFigure(midX, midY);
             if (middleFigure != null && middleFigure.color != this.color)
             {
-                board.RemoveFigure(middleFigure);
-                isHaveEaten = true;
                 return true;
             }
         }
         return false;
     }
+
+    public virtual bool IsPossibleEating(int newX, int newY, ChessBoard board)
+    {
+        if (isDamka)
+        {
+            if (Math.Abs(newX - x) != Math.Abs(newY - y))
+                return false;
+            if (newX == x || newY == y)
+                return false;
+            int stepX = (newX - x) / Math.Abs(newX - x);
+            int stepY = (newY - y) / Math.Abs(newY - y);
+            int currX = x + stepX;
+            int currY = y + stepY;
+
+            Figure? figureAtEnd = board.GetFigure(newX, newY);
+            if (figureAtEnd != null)
+                return false;
+
+            List<Figure> figuresOnWay = new List<Figure>();
+            while (currX != newX || currY != newY)
+            {
+                Figure? figureAtPos = board.GetFigure(currX, currY);
+                if (figureAtPos != null)
+                {
+                    figuresOnWay.Add(figureAtPos);
+                }
+                currX += stepX;
+                currY += stepY;
+            }
+            if (figuresOnWay.Count == 0)
+            {
+                return false;
+            }
+            else if (figuresOnWay.Count == 1)
+            {
+                Figure middleFigure = figuresOnWay[0];
+                if (middleFigure.color != this.color)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        else
+        {
+            int midX = (x + newX) / 2;
+            int midY = (y + newY) / 2;
+            if (board.GetFigure(newX, newY) != null)
+                return false;
+            if (Math.Abs(newX - x) == 2 && Math.Abs(newY - y) == 2)
+            {
+                Figure? middleFigure = board.GetFigure(midX, midY);
+                if (middleFigure != null && middleFigure.color != this.color)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
 
     public virtual bool IsPossibleMoveDamka(int newX, int newY, ChessBoard board)
     {
@@ -95,8 +199,6 @@ public class Figure
             Figure middleFigure = figuresOnWay[0];
             if (middleFigure.color != this.color)
             {
-                board.RemoveFigure(middleFigure);
-                isHaveEaten = true;
                 return true;
             }
         }
@@ -106,35 +208,26 @@ public class Figure
     public virtual bool IsPossibleMove(int newX, int newY, ChessBoard board)
     {
         Figure? figureAtNewCoords = board.GetFigure(newX, newY);
-        isHaveEaten = false;
         if (figureAtNewCoords != null) return false;
+
+        isHaveEaten = false;
 
         if (color == ConsoleColor.White)
         {
             if (newY < y && y - newY == 1 && Math.Abs(newX - x) == 1)
             {
-                Move(newX, newY);
                 return true;
             }
             else
             {
                 if (isDamka)
                 {
-                    if (IsPossibleMoveDamka(newX, newY, board))
-                    {
-                        Move(newX, newY);
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return IsPossibleMoveDamka(newX, newY, board);
                 }
                 else
                 {
-                    if (IsPossibleEatingBySimpleFigure(newX, newY, board))
+                    if (IsPossibleEating(newX, newY, board))
                     {
-                        Move(newX, newY);
                         return true;
                     }
                     else
@@ -148,28 +241,18 @@ public class Figure
         {
             if (newY > y && newY - y == 1 && Math.Abs(newX - x) == 1)
             {
-                Move(newX, newY);
                 return true;
             }
             else
             {
                 if (isDamka)
                 {
-                    if (IsPossibleMoveDamka(newX, newY, board))
-                    {
-                        Move(newX, newY);
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return IsPossibleMoveDamka(newX, newY, board);
                 }
                 else
                 {
-                    if (IsPossibleEatingBySimpleFigure(newX, newY, board))
+                    if (IsPossibleEating(newX, newY, board))
                     {
-                        Move(newX, newY);
                         return true;
                     }
                     else
