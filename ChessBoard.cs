@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Program;
 
@@ -8,6 +9,59 @@ public class ChessBoard
     public int size = 8;
     public List<List<string>> board = new List<List<string>>();
     public List<Figure> figures = new List<Figure>();
+
+    public bool IsColorsSame(Figure chosenFigure, Player currentPlayer)
+    {
+        return chosenFigure.color == currentPlayer.color;
+    }
+
+    public bool IsAnyMoveExists(ConsoleColor color)
+    {
+        bool output = false;
+        foreach (var figure in figures)
+        {
+            if (figure.color != color) continue;
+            for (int newY = 0; newY < size; newY++)
+            {
+                for (int newX = 0; newX < size; newX++)
+                {
+                    if (figure.IsPossibleMove(newX, newY, this))
+                    {
+                        output = true;
+                        break;
+                    }
+                }
+                if (output) break;
+            }
+        }
+        return output;
+    }
+
+    public bool IsMoveLegal(Figure selectedFigure) // скорее всего должно работать, возиожно не в этом классе, возможно будет ругаться на static
+    {
+        bool isAnyFigureCanMove = true;
+        foreach (var figure in figures)
+        {
+            if (figure.color != selectedFigure.color) continue;
+            for (int newY = 0; newY < size; newY++)
+            {
+                for (int newX = 0; newX < size; newX++)
+                {
+                    if (figure.IsPossibleMove(newX, newY, this))
+                    {
+                        if (figure.isHaveEaten && (figure.x != selectedFigure.x || figure.y != selectedFigure.y))
+                        {
+                            isAnyFigureCanMove = false;
+                        }
+                    }
+                    if (isAnyFigureCanMove) break;
+                }
+                if (isAnyFigureCanMove) break;
+            }
+            if (isAnyFigureCanMove) break;
+        }
+        return isAnyFigureCanMove;
+    }
 
     public void InitChessBoard()
     {
@@ -35,28 +89,29 @@ public class ChessBoard
                 {
                     if (y < 3)
                     {
-                        Figure whiteFigure = new Figure(x, y, ConsoleColor.White, false);                        
-                        figures.Add(whiteFigure);
+                        Figure blackFigure = new Figure(x, y, ConsoleColor.Black);
+                        figures.Add(blackFigure);
                     }
                     else if (y > 4)
                     {
-                        Figure blackFigure = new Figure(x, y, ConsoleColor.Black, false);                        
-                        figures.Add(blackFigure);
+                        Figure whiteFigure = new Figure(x, y, ConsoleColor.White);
+                        figures.Add(whiteFigure);
                     }
                 }
-            } else
+            }
+            else
             {
                 for (int x = 0; x < 8; x += 2)
                 {
                     if (y < 3)
                     {
-                        Figure whiteFigure = new Figure(x, y, ConsoleColor.White, false);                        
-                        figures.Add(whiteFigure);
+                        Figure blackFigure = new Figure(x, y, ConsoleColor.Black);
+                        figures.Add(blackFigure);
                     }
                     else if (y > 4)
                     {
-                        Figure blackFigure = new Figure(x, y, ConsoleColor.Black, false);                        
-                        figures.Add(blackFigure);
+                        Figure whiteFigure = new Figure(x, y, ConsoleColor.White);
+                        figures.Add(whiteFigure);
                     }
                 }
             }
@@ -96,14 +151,36 @@ public class ChessBoard
         Console.Write(" a  b  c  d  e  f  g  h ");
         Console.ResetColor();
     }
-    
+
     public void DrawFigures()
     {
         foreach (var figure in figures)
         {
             figure.DrawFigure();
         }
-        Console.SetCursorPosition(0, 12);
-        Console.WriteLine("Figures drawn");
+        Program.DrawNotification("Figures drawn");
+    }
+
+    public Figure? GetFigure(int x, int y)
+    {
+        foreach (var figure in figures)
+        {
+            if (figure.x == x && figure.y == y)
+            {
+                return figure;
+            }
+        }
+        return null;
+    }
+
+    public void RemoveFigure(Figure figure)
+    {
+        figures.Remove(figure);
+    }
+
+    public bool IsFigureExists(int x, int y)
+    {
+        if (board[y][x] == "white") return false;
+        return GetFigure(x, y) != null;
     }
 }
