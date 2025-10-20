@@ -9,11 +9,13 @@ public class ChessBoard
     public int size = 8;
     public List<List<string>> board = new List<List<string>>();
     public List<Figure> figures = new List<Figure>();
+    public List<string> moves = new List<string>();
 
-    public bool IsColorsSame(Figure chosenFigure, Player currentPlayer)
+    public void AddMoveToList(string move)
     {
-        return chosenFigure.color == currentPlayer.color;
+        moves.Add(move);
     }
+
 
     public bool IsAnyMoveExists(ConsoleColor color)
     {
@@ -71,37 +73,6 @@ public class ChessBoard
             }
         }
         return false;
-    }
-
-    public bool IsMoveEating(Figure selectedFigure)
-    {
-        return true;
-    }
-
-    public bool IsMoveLegal(Figure selectedFigure)
-    {
-        bool isAnyFigureCanMove = true;
-        foreach (var figure in figures)
-        {
-            if (figure.color != selectedFigure.color) continue;
-            for (int newY = 0; newY < size; newY++)
-            {
-                for (int newX = 0; newX < size; newX++)
-                {
-                    if (figure.IsPossibleMove(newX, newY, this))
-                    {
-                        if (figure.isHaveEaten && (figure.x != selectedFigure.x || figure.y != selectedFigure.y))
-                        {
-                            isAnyFigureCanMove = false;
-                        }
-                    }
-                    if (isAnyFigureCanMove) break;
-                }
-                if (isAnyFigureCanMove) break;
-            }
-            if (isAnyFigureCanMove) break;
-        }
-        return isAnyFigureCanMove;
     }
 
     public void InitChessBoard()
@@ -219,9 +190,4 @@ public class ChessBoard
         if (figure != null) figures.Remove(figure);
     }
 
-    public bool IsFigureExists(int x, int y)
-    {
-        if (board[y][x] == "white") return false;
-        return GetFigure(x, y) != null;
-    }
 }

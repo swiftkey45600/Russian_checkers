@@ -81,8 +81,6 @@ public class Figure
         }
     }
 
-    public virtual bool IsDamka() { return isDamka; }
-
     public virtual void Move(int newX, int newY)
     {
         x = newX;
@@ -214,52 +212,19 @@ public class Figure
 
         if (color == ConsoleColor.White)
         {
-            if (newY < y && y - newY == 1 && Math.Abs(newX - x) == 1)
-            {
-                return true;
-            }
+            if (newY < y && y - newY == 1 && Math.Abs(newX - x) == 1) return true;
             else
             {
-                if (isDamka)
-                {
-                    return IsPossibleMoveDamka(newX, newY, board);
-                }
-                else
-                {
-                    if (IsPossibleEating(newX, newY, board))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
+                if (isDamka) return IsPossibleMoveDamka(newX, newY, board);
+                else return IsPossibleEating(newX, newY, board);
             }
         }
         else
         {
-            if (newY > y && newY - y == 1 && Math.Abs(newX - x) == 1)
+            if (newY > y && newY - y == 1 && Math.Abs(newX - x) == 1) return true;
             {
-                return true;
-            }
-            else
-            {
-                if (isDamka)
-                {
-                    return IsPossibleMoveDamka(newX, newY, board);
-                }
-                else
-                {
-                    if (IsPossibleEating(newX, newY, board))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
+                if (isDamka) return IsPossibleMoveDamka(newX, newY, board);
+                else return IsPossibleEating(newX, newY, board);
             }
         }
     }
